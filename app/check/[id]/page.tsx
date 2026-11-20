@@ -81,7 +81,9 @@ export default function CheckPage() {
               <Pill key={w}>WCAG {w}</Pill>
             ))}
           </div>
-          <h1 className="relative mt-4 text-5xl font-medium leading-[0.95] tracking-tighter lg:text-6xl xl:text-7xl">{category.title[lang]}</h1>
+          <h1 className="relative mt-4 text-5xl font-medium leading-[0.95] tracking-tighter lg:text-6xl xl:text-7xl">
+            <span className="tabular-nums opacity-40">{idx + 1}.</span> {category.title[lang]}
+          </h1>
           <p className={`relative mt-4 max-w-md text-lg leading-snug ${heroDark ? "text-mute" : ""}`}>{category.short[lang]}</p>
 
           <div className="relative mt-auto pt-8">

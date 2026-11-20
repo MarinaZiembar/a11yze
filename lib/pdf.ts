@@ -423,7 +423,7 @@ function summary(ctx: Ctx, a: Analysis) {
     const sub = dark ? C.mute : isManual ? C.ink : C.stone;
     const track = dark ? C.cream : C.ink;
     rr(p, M, ctx.y, CW, rowH - 8, 18, bg, isManual || dark ? 1 : 0.8);
-    text(p, bold, c.title[lang], colX.name, ctx.y + 20, 11, fg);
+    text(p, bold, `${CATEGORIES.indexOf(c) + 1}. ${c.title[lang]}`, colX.name, ctx.y + 20, 11, fg);
     text(p, reg, PRINCIPLES[c.principle][lang] + (c.wcag.length ? `  ·  WCAG ${c.wcag.join(", ")}` : ""), colX.name, ctx.y + 34, 7.5, sub);
 
     ([[sd, colX.d], [sm, colX.m]] as [CategoryStats, number][]).forEach(([s, x]) => {
@@ -470,7 +470,7 @@ function categoryBlock(ctx: Ctx, a: Analysis, c: Category, issues: Issue[]) {
   const shown = issues.slice(0, 3);
 
   /* ── medir ── */
-  const titleLines = wrap(bold, c.title[lang], 18, inner - 150);
+  const titleLines = wrap(bold, `${CATEGORIES.indexOf(c) + 1}. ${c.title[lang]}`, 18, inner - 150);
   const headerH = Math.max(16 + 16 + titleLines.length * 22, 56);
   const issueLay = shown.map((is) => {
     const tl = wrap(bold, is.audit.title, 8.5, leftW - 12);

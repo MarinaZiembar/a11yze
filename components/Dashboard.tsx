@@ -56,7 +56,6 @@ export function Dashboard() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <DeviceSwitch />
-            <PdfButton />
             <button
               type="button"
               onClick={reset}
@@ -64,6 +63,7 @@ export function Dashboard() {
             >
               {t.dash.newAnalysis}
             </button>
+            <PdfButton />
           </div>
         </div>
 
@@ -79,7 +79,7 @@ export function Dashboard() {
             const stats = statsFor(auditsFor(report, c), c);
             return (
               <li key={c.id} className="animate-rise lg:min-h-0" style={{ animationDelay: `${60 + i * 45}ms` }}>
-                <CategoryCard category={c} stats={stats} />
+                <CategoryCard category={c} stats={stats} index={i + 1} />
               </li>
             );
           })}
@@ -102,7 +102,7 @@ function ScoreCard({ report }: { report: DeviceReport }) {
 
   return (
     <article className="relative flex h-full flex-col overflow-hidden rounded-[2rem] bg-coal p-6 text-cream">
-      <Asterisk className="pointer-events-none absolute -bottom-16 -right-16 size-64 animate-spin-slow text-ash" />
+      <Asterisk className="pointer-events-none absolute -right-20 -top-20 size-56 animate-spin-slow text-ash/70" />
       <h2 className="relative text-sm font-medium text-mute">{t.dash.overall}</h2>
       <p className="relative mt-2 flex items-baseline gap-2">
         <span className="text-[clamp(4.5rem,9vw,8.5rem)] font-medium leading-none tracking-tighter">{shown}</span>
@@ -132,7 +132,7 @@ function ScoreCard({ report }: { report: DeviceReport }) {
   );
 }
 
-function CategoryCard({ category: c, stats }: { category: Category; stats: CategoryStats }) {
+function CategoryCard({ category: c, stats, index }: { category: Category; stats: CategoryStats; index: number }) {
   const { t, lang } = useLang();
   const tone = CARD_TONE[stats.level];
   const dark = stats.level === "bad";
@@ -141,7 +141,7 @@ function CategoryCard({ category: c, stats }: { category: Category; stats: Categ
     stats.level === "manual"
       ? `${stats.manual} ${t.dash.checks}`
       : stats.level === "empty"
-        ? t.level.empty
+        ? t.detail.status.na
         : t.dash.passOf(stats.pass, stats.total);
 
   return (
@@ -150,7 +150,9 @@ function CategoryCard({ category: c, stats }: { category: Category; stats: Categ
         <Pill>{PRINCIPLES[c.principle][lang]}</Pill>
         <ArrowBadge tone={dark ? "violet" : "ink"} />
       </div>
-      <h2 className="mt-3 text-[1.6rem] font-medium leading-[1.05] tracking-tight xl:text-3xl short:text-2xl">{c.title[lang]}</h2>
+      <h2 className="mt-3 text-[1.6rem] font-medium leading-[1.05] tracking-tight xl:text-3xl short:text-2xl">
+        <span className="tabular-nums opacity-50">{index}.</span> {c.title[lang]}
+      </h2>
       <p className={`mt-1 line-clamp-2 text-sm ${dark ? "text-mute" : stats.level === "manual" ? "text-ink" : "text-stone"} lg:max-xl:hidden short:hidden`}>
         {c.short[lang]}
       </p>
