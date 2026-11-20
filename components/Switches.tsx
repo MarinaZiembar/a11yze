@@ -25,7 +25,7 @@ function Segmented<T extends string>({
   tone?: "dark" | "light";
 }) {
   const idx = Math.max(0, options.findIndex((o) => o.value === value));
-  const shell = tone === "dark" ? "bg-coal text-cream" : "bg-ink/10 text-ink";
+  const shell = tone === "dark" ? "bg-ink text-cream ring-1 ring-cream/15" : "bg-ink/10 text-ink";
   const thumb = tone === "dark" ? "bg-cream" : "bg-ink";
   const active = tone === "dark" ? "text-ink" : "text-cream";
 

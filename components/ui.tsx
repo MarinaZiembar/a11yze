@@ -53,7 +53,7 @@ export const LEVEL_DOT: Record<Level, string> = {
   warn: "bg-warn",
   bad: "bg-bad",
   empty: "bg-sand ring-1 ring-ink/20",
-  manual: "bg-violet",
+  manual: "bg-ink",
 };
 
 export function Pill({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -65,27 +65,40 @@ export function Pill({ children, className = "" }: { children: React.ReactNode; 
 }
 
 /**
- * Termómetro horizontal: bulbo + tubo que se llena según el % de chequeos que pasan.
+ * Termómetro horizontal: el tubo se llena según el % de chequeos que pasan y el bulbo
+ * queda apoyado en el punto más lejano al que llegó el líquido.
  * Verde ≥ 75 %, amarillo 40–74 %, rojo < 40 % (ver lib/scoring.ts).
- * Las marcas finas del tubo muestran dónde cambia de color. Es decorativo:
- * el estado siempre está también en texto al lado.
+ * Las marcas finas muestran dónde cambia de color. Es decorativo: el estado siempre
+ * está también en texto al lado.
  */
 export function Thermometer({ value, level, className = "", size = "md" }: { value: number; level: Level; className?: string; size?: "md" | "lg" }) {
   const fill = level === "empty" || level === "manual" ? "bg-sand" : LEVEL_DOT[level];
+  const target = Math.max(0, Math.min(100, value));
+  // Arranca en 0 y anima hasta el valor (transition; se anula con prefers-reduced-motion)
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShown(target));
+    return () => cancelAnimationFrame(id);
+  }, [target]);
+
   const tube = size === "lg" ? "h-3.5" : "h-2.5";
   const bulb = size === "lg" ? "size-6" : "size-4";
+  const bulbPx = size === "lg" ? 24 : 16;
+  const ease = "duration-1000 ease-[cubic-bezier(0.2,0.7,0.2,1)]";
+
   return (
-    <div className={`flex items-center ${className}`} aria-hidden="true">
-      <span className={`relative z-10 shrink-0 rounded-full ring-[3px] ring-current/15 ${bulb} ${fill}`} />
-      <span className={`relative -ml-1.5 flex-1 overflow-hidden rounded-r-full bg-current/10 ${tube}`}>
-        <span
-          className={`absolute inset-y-0 left-0 origin-left animate-fill rounded-r-full ${fill}`}
-          style={{ width: `${Math.max(4, Math.min(100, value))}%` }}
-        />
+    <div className={`relative flex items-center ${className}`} style={{ height: bulbPx, paddingInline: bulbPx / 2 }} aria-hidden="true">
+      <span className={`relative block w-full overflow-hidden rounded-full bg-current/10 ${tube}`}>
+        <span className={`absolute inset-y-0 left-0 rounded-full transition-[width] ${ease} ${fill}`} style={{ width: `${shown}%` }} />
         {[40, 75].map((m) => (
           <span key={m} className="absolute inset-y-0 w-px bg-current/25" style={{ left: `${m}%` }} />
         ))}
       </span>
+      {/* Bulbo: se posa en el extremo del llenado */}
+      <span
+        className={`absolute top-1/2 rounded-full ring-[3px] ring-current/15 transition-[left] ${ease} ${bulb} ${fill}`}
+        style={{ left: `calc(${bulbPx / 2}px + (100% - ${bulbPx}px) * ${shown / 100})`, transform: "translate(-50%, -50%)" }}
+      />
     </div>
   );
 }

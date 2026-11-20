@@ -251,16 +251,20 @@ function thermometer(p: PDFPage, x: number, yTop: number, w: number, value: numb
   const tube = big ? 8 : 6;
   const bulb = big ? 7 : 5;
   const fill = LEVEL_COLOR[level];
-  const tx = x + bulb;
-  rr(p, tx, yTop - tube / 2, w - bulb, tube, tube / 2, track, 0.14);
-  const fw = Math.max(tube, ((w - bulb) * Math.max(0, Math.min(100, value))) / 100);
-  rr(p, tx, yTop - tube / 2, fw, tube, tube / 2, fill);
+  const v = Math.max(0, Math.min(100, value));
+  // el tubo va de centro a centro del bulbo en 0 % y en 100 %
+  const x0 = x + bulb;
+  const span = w - bulb * 2;
+  rr(p, x0 - tube / 2, yTop - tube / 2, span + tube, tube, tube / 2, track, 0.14);
+  const end = x0 + (span * v) / 100;
+  if (v > 0) rr(p, x0 - tube / 2, yTop - tube / 2, end - x0 + tube, tube, tube / 2, fill);
   for (const m of [THRESHOLDS.warn, THRESHOLDS.good]) {
-    const mx = tx + ((w - bulb) * m) / 100;
+    const mx = x0 + (span * m) / 100;
     p.drawLine({ start: { x: mx, y: H - yTop + tube / 2 }, end: { x: mx, y: H - yTop - tube / 2 }, thickness: 0.6, color: track, opacity: 0.35 });
   }
-  p.drawCircle({ x: x + bulb, y: H - yTop, size: bulb + 1.6, color: track, opacity: 0.14 });
-  p.drawCircle({ x: x + bulb, y: H - yTop, size: bulb, color: fill });
+  // bulbo apoyado en el extremo del llenado
+  p.drawCircle({ x: end, y: H - yTop, size: bulb + 1.8, color: track, opacity: 0.16 });
+  p.drawCircle({ x: end, y: H - yTop, size: bulb, color: fill });
 }
 
 function pill(p: PDFPage, font: PDFFont, s: string, x: number, yTop: number, color: RGB, bg?: RGB, size = 7.5) {
@@ -321,14 +325,14 @@ function cover(ctx: Ctx, a: Analysis) {
 
   let y = 150;
   pill(p, bold, t.kicker.toUpperCase(), M, y, C.ink, undefined, 7.5);
-  y += 30;
+  y += 40;
   const host = new URL(a.mobile.finalUrl || a.url).host.replace(/^www\./, "");
   const titleSize = host.length > 22 ? 34 : 46;
   const ls = wrap(bold, host, titleSize, CW);
   y += titleSize * 0.8;
   y += lines(p, bold, ls, M, y, titleSize, titleSize * 1.02);
-  text(p, reg, ellipsize(reg, a.mobile.finalUrl || a.url, 10, CW), M, y + 6, 10, C.stone);
-  y += 34;
+  text(p, reg, ellipsize(reg, a.mobile.finalUrl || a.url, 10, CW), M, y + 10, 10, C.stone);
+  y += 40;
 
   // Tarjetas de puntaje
   const cardW = (CW - 12) / 2;
@@ -397,36 +401,40 @@ function summary(ctx: Ctx, a: Analysis) {
   logo(ctx, M, M);
   ctx.y = M + 64;
   text(p, bold, t.summary, M, ctx.y, 26);
-  text(p, reg, t.summarySub, M, ctx.y + 18, 9, C.stone);
-  ctx.y += 34;
+  text(p, reg, t.summarySub, M, ctx.y + 22, 9, C.stone);
+  ctx.y += 48;
 
   // encabezados de columnas
   const colX = { name: M + 18, d: M + 250, m: M + 250 + 132 };
   text(p, bold, t.device.desktop.toUpperCase(), colX.d, ctx.y + 4, 7, C.stone);
   text(p, bold, t.device.mobile.toUpperCase(), colX.m, ctx.y + 4, 7, C.stone);
-  ctx.y += 12;
+  ctx.y += 14;
 
-  const rowH = 50;
+  const rowH = 54;
   for (const c of CATEGORIES) {
     const sd = statsFor(auditsFor(a.desktop, c), c);
     const sm = statsFor(auditsFor(a.mobile, c), c);
     const isManual = c.id === "manual";
     const worst: Level = [sd.level, sm.level].includes("bad") ? "bad" : [sd.level, sm.level].includes("warn") ? "warn" : sd.level;
-    const bg = isManual ? C.coal : worst === "bad" ? C.violet : C.white;
-    const fg = isManual ? C.cream : C.ink;
-    rr(p, M, ctx.y, CW, rowH - 6, 18, bg, isManual || worst === "bad" ? 1 : 0.8);
-    text(p, bold, c.title[lang], colX.name, ctx.y + 19, 11, fg);
-    text(p, reg, PRINCIPLES[c.principle][lang] + (c.wcag.length ? `  ·  WCAG ${c.wcag.join(", ")}` : ""), colX.name, ctx.y + 32, 7.5, isManual ? C.mute : C.stone);
+    // nivel bajo → negro · revisión manual → violeta · resto → blanco
+    const dark = !isManual && worst === "bad";
+    const bg = isManual ? C.violet : dark ? C.coal : C.white;
+    const fg = dark ? C.cream : C.ink;
+    const sub = dark ? C.mute : isManual ? C.ink : C.stone;
+    const track = dark ? C.cream : C.ink;
+    rr(p, M, ctx.y, CW, rowH - 8, 18, bg, isManual || dark ? 1 : 0.8);
+    text(p, bold, c.title[lang], colX.name, ctx.y + 20, 11, fg);
+    text(p, reg, PRINCIPLES[c.principle][lang] + (c.wcag.length ? `  ·  WCAG ${c.wcag.join(", ")}` : ""), colX.name, ctx.y + 34, 7.5, sub);
 
     ([[sd, colX.d], [sm, colX.m]] as [CategoryStats, number][]).forEach(([s, x]) => {
       if (isManual) {
-        text(p, bold, `${s.manual}`, x, ctx.y + 26, 14, C.cream);
-        text(p, reg, t.checks, x + bold.widthOfTextAtSize(`${s.manual}`, 14) + 4, ctx.y + 26, 8, C.mute);
+        text(p, bold, `${s.manual}`, x, ctx.y + 28, 14, C.ink);
+        text(p, reg, t.checks, x + bold.widthOfTextAtSize(`${s.manual}`, 14) + 4, ctx.y + 28, 8, C.ink);
       } else if (s.score === null) {
-        text(p, reg, t.noItems, x, ctx.y + 25, 9, C.stone);
+        text(p, reg, t.noItems, x, ctx.y + 27, 9, sub);
       } else {
-        thermometer(p, x, ctx.y + 22, 80, s.score, s.level, C.ink);
-        text(p, bold, `${s.pass}/${s.total}`, x + 88, ctx.y + 25, 9, fg);
+        thermometer(p, x, ctx.y + 24, 80, s.score, s.level, track);
+        text(p, bold, `${s.pass}/${s.total}`, x + 88, ctx.y + 27, 9, fg);
       }
     });
     ctx.y += rowH;
@@ -454,28 +462,28 @@ function issuesFor(a: Analysis, c: Category): Issue[] {
 
 function categoryBlock(ctx: Ctx, a: Analysis, c: Category, issues: Issue[]) {
   const { t, reg, bold, mono, lang } = ctx;
-  const pad = 20;
+  const pad = 24;
   const inner = CW - pad * 2;
   const leftW = inner * 0.57;
   const gap = 20;
   const rightW = inner - leftW - gap;
-  const shown = issues.slice(0, 4);
+  const shown = issues.slice(0, 3);
 
   /* ── medir ── */
   const titleLines = wrap(bold, c.title[lang], 18, inner - 150);
-  const headerH = Math.max(16 + 10 + titleLines.length * 20, 46);
+  const headerH = Math.max(16 + 16 + titleLines.length * 22, 56);
   const issueLay = shown.map((is) => {
     const tl = wrap(bold, is.audit.title, 8.5, leftW - 12);
     const snippet = is.audit.items[0]?.snippet;
-    return { tl, snippet, h: tl.length * 11 + 17 + (snippet ? 15 : 0) + 6 };
+    return { tl, snippet, h: tl.length * 11.5 + 19 + (snippet ? 16 : 0) + 12 };
   });
-  const leftH = 14 + issueLay.reduce((acc, l) => acc + l.h, 0) + (issues.length > shown.length ? 12 : 0);
+  const leftH = 18 + issueLay.reduce((acc, l) => acc + l.h, 0) + (issues.length > shown.length ? 12 : 0);
   const strat = c.strategies[lang].map((s) => wrap(reg, s, 8, rightW - 18));
   const res = c.resources.map((r) => wrap(bold, r.label[lang], 8, rightW - 10));
-  const rightH = 14 + strat.reduce((acc, l) => acc + l.length * 10.5 + 5, 0) + 14 + 12 + res.reduce((acc, l) => acc + l.length * 10.5 + 4, 0);
-  const height = pad + headerH + 16 + Math.max(leftH, rightH) + pad;
+  const rightH = 18 + strat.reduce((acc, l) => acc + l.length * 11 + 8, 0) + 18 + 14 + res.reduce((acc, l) => acc + l.length * 11 + 6, 0);
+  const height = pad + headerH + 22 + Math.max(leftH, rightH) + pad;
 
-  ensure(ctx, height + 12);
+  ensure(ctx, height + 16);
   const p = ctx.page;
   const x0 = M;
   const yTop = ctx.y;
@@ -486,7 +494,7 @@ function categoryBlock(ctx: Ctx, a: Analysis, c: Category, issues: Issue[]) {
   let px = x0 + pad;
   px += pill(p, bold, PRINCIPLES[c.principle][lang], px, y, C.ink) + 4;
   c.wcag.forEach((w) => (px += pill(p, reg, `WCAG ${w}`, px, y, C.ink) + 4));
-  lines(p, bold, titleLines, x0 + pad, y + 16 + 10 + 14, 18, 20);
+  lines(p, bold, titleLines, x0 + pad, y + 16 + 16 + 14, 18, 22);
 
   (["desktop", "mobile"] as Device[]).forEach((d, i) => {
     const s = statsFor(auditsFor(a[d], c), c);
@@ -500,20 +508,20 @@ function categoryBlock(ctx: Ctx, a: Analysis, c: Category, issues: Issue[]) {
     } else textRight(p, reg, t.noItems, bx + 124, by + 10, 7.5, C.stone);
   });
 
-  const colTop = y + headerH + 16;
+  const colTop = y + headerH + 22;
   // separador vertical
   p.drawLine({ start: { x: x0 + pad + leftW + gap / 2, y: H - colTop + 4 }, end: { x: x0 + pad + leftW + gap / 2, y: H - (yTop + height - pad) }, thickness: 0.5, color: C.ink, opacity: 0.1 });
 
   /* ── izquierda: qué encontramos ── */
   let ly = colTop;
   text(p, bold, t.found.toUpperCase(), x0 + pad, ly, 7, C.stone);
-  ly += 8;
+  ly += 12;
   shown.forEach((is, i) => {
     const lay = issueLay[i];
     const lx = x0 + pad;
     p.drawCircle({ x: lx + 3, y: H - (ly + 6), size: 2.6, color: C.bad });
-    lines(p, bold, lay.tl, lx + 12, ly + 9, 8.5, 11);
-    let cy = ly + lay.tl.length * 11 + 2;
+    lines(p, bold, lay.tl, lx + 12, ly + 9, 8.5, 11.5);
+    let cy = ly + lay.tl.length * 11.5 + 4;
     let cx = lx + 12;
     const chips: [string, RGB][] = [[is.devices.map((d) => t.device[d]).join(" + "), C.sand]];
     if (is.audit.total) chips.push([t.elements(is.audit.total), C.violet]);
@@ -523,7 +531,7 @@ function categoryBlock(ctx: Ctx, a: Analysis, c: Category, issues: Issue[]) {
       text(p, reg, chip, cx + 6, cy + 9.2, 6.5);
       cx += w + 4;
     });
-    cy += 17;
+    cy += 18;
     if (lay.snippet) {
       rr(p, lx + 12, cy, leftW - 12, 12, 4, C.coal);
       text(p, mono, ellipsize(mono, lay.snippet, 6.3, leftW - 26), lx + 18, cy + 8.3, 6.3, C.sand);
@@ -536,32 +544,32 @@ function categoryBlock(ctx: Ctx, a: Analysis, c: Category, issues: Issue[]) {
   const rx = x0 + pad + leftW + gap;
   let ry = colTop;
   text(p, bold, t.fix.toUpperCase(), rx, ry, 7, C.stone);
-  ry += 8;
+  ry += 12;
   strat.forEach((ls, i) => {
     p.drawCircle({ x: rx + 5.5, y: H - (ry + 6), size: 5.5, color: C.ink });
     const n = String(i + 1);
     text(p, bold, n, rx + 5.5 - bold.widthOfTextAtSize(n, 6.5) / 2, ry + 8.3, 6.5, C.cream);
-    lines(p, reg, ls, rx + 16, ry + 9, 8, 10.5);
-    ry += ls.length * 10.5 + 5;
+    lines(p, reg, ls, rx + 16, ry + 9, 8, 11);
+    ry += ls.length * 11 + 8;
   });
-  ry += 14;
+  ry += 18;
   text(p, bold, t.resources.toUpperCase(), rx, ry, 7, C.stone);
-  ry += 6;
+  ry += 10;
   c.resources.forEach((r, i) => {
     const ls = res[i];
     const top = ry;
     p.drawCircle({ x: rx + 3, y: H - (top + 7.5), size: 2.4, color: C.violet });
     ls.forEach((l, j) => {
-      const yy = top + 10 + j * 10.5;
+      const yy = top + 10 + j * 11;
       text(p, bold, l, rx + 10, yy, 8);
       const w = bold.widthOfTextAtSize(l, 8);
       p.drawLine({ start: { x: rx + 10, y: H - yy - 1.6 }, end: { x: rx + 10 + w, y: H - yy - 1.6 }, thickness: 0.5, color: C.violet });
     });
-    link(ctx, r.href, rx, top + 1, rightW, ls.length * 10.5 + 2);
-    ry += ls.length * 10.5 + 4;
+    link(ctx, r.href, rx, top + 1, rightW, ls.length * 11 + 2);
+    ry += ls.length * 11 + 6;
   });
 
-  ctx.y += height + 12;
+  ctx.y += height + 16;
 }
 
 function details(ctx: Ctx, a: Analysis) {
@@ -570,7 +578,7 @@ function details(ctx: Ctx, a: Analysis) {
   logo(ctx, M, M);
   ctx.y = M + 64;
   text(ctx.page, bold, t.details, M, ctx.y, 26);
-  ctx.y += 22;
+  ctx.y += 30;
 
   const withIssues = CATEGORIES.filter((c) => c.id !== "manual").map((c) => ({ c, issues: issuesFor(a, c) }));
   const bad = withIssues.filter((x) => x.issues.length);
@@ -604,40 +612,40 @@ function manualPage(ctx: Ctx, a: Analysis) {
   const body = wrap(reg, t.manualBody, 9.5, CW - 110);
 
   const half = Math.ceil(items.length / 2);
-  const colH = (arr: string[][]) => arr.reduce((acc, l) => acc + l.length * 11 + 6, 0);
+  const colH = (arr: string[][]) => arr.reduce((acc, l) => acc + l.length * 11 + 9, 0);
   const listH = Math.max(colH(items.slice(0, half)), colH(items.slice(half)));
-  const stratH = strat.reduce((acc, l) => acc + l.length * 12 + 6, 0);
-  const height = 24 + 26 + body.length * 13 + 16 + listH + 24 + 16 + stratH + 24;
+  const stratH = strat.reduce((acc, l) => acc + l.length * 12 + 9, 0);
+  const height = 28 + 26 + body.length * 13 + 20 + listH + 28 + 18 + stratH + 28;
 
   ensure(ctx, height + 80);
   const p = ctx.page;
   let y = ctx.y;
-  rr(p, M, y, CW, height, 26, C.coal);
-  asterisk(p, M + CW - 46, y + 44, 20, C.ash);
-  y += 24 + 18;
-  text(p, bold, t.manualTitle, M + 24, y, 22, C.cream);
+  rr(p, M, y, CW, height, 26, C.violet);
+  asterisk(p, M + CW - 46, y + 44, 20, C.ink, 0.12);
+  y += 28 + 18;
+  text(p, bold, t.manualTitle, M + 24, y, 22, C.ink);
   y += 10;
-  y += lines(p, reg, body, M + 24, y + 12, 9.5, 13, C.mute) + 16;
+  y += lines(p, reg, body, M + 24, y + 14, 9.5, 13, C.ink) + 20;
 
   const colW = (CW - 64) / 2;
   [items.slice(0, half), items.slice(half)].forEach((col, ci) => {
     let yy = y;
     col.forEach((ls) => {
       const x = M + 24 + ci * (colW + 16);
-      rr(p, x, yy, 8, 8, 2.5, C.violet);
-      lines(p, reg, ls, x + 14, yy + 7.5, 8.5, 11, C.cream);
-      yy += ls.length * 11 + 6;
+      rr(p, x, yy, 8, 8, 2.5, C.ink);
+      lines(p, reg, ls, x + 14, yy + 7.5, 8.5, 11, C.ink);
+      yy += ls.length * 11 + 9;
     });
   });
-  y += listH + 24;
-  text(p, bold, t.howTest.toUpperCase(), M + 24, y, 7.5, C.mute);
-  y += 8;
+  y += listH + 28;
+  text(p, bold, t.howTest.toUpperCase(), M + 24, y, 7.5, C.ink);
+  y += 10;
   strat.forEach((ls, i) => {
-    p.drawCircle({ x: M + 30, y: H - (y + 7), size: 6, color: C.lime });
+    p.drawCircle({ x: M + 30, y: H - (y + 7), size: 6, color: C.ink });
     const n = String(i + 1);
-    text(p, bold, n, M + 30 - bold.widthOfTextAtSize(n, 7) / 2, y + 9.5, 7, C.ink);
-    lines(p, reg, ls, M + 42, y + 10, 9, 12, C.cream);
-    y += ls.length * 12 + 6;
+    text(p, bold, n, M + 30 - bold.widthOfTextAtSize(n, 7) / 2, y + 9.5, 7, C.cream);
+    lines(p, reg, ls, M + 42, y + 10, 9, 12, C.ink);
+    y += ls.length * 12 + 9;
   });
   ctx.y += height + 14;
 

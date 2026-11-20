@@ -10,13 +10,13 @@ import { ArrowBadge, Asterisk, LEVEL_DOT, Pill, Thermometer, useCountUp } from "
 import { DeviceSwitch } from "./Switches";
 import { PdfButton } from "./PdfButton";
 
-/** Tarjetas claras como la referencia; las que tienen problemas se destacan en violeta. */
+/** Tarjetas claras; las de nivel bajo (rojo) van en negro y la de revisión manual en violeta. */
 const CARD_TONE: Record<Level, string> = {
-  bad: "bg-violet text-ink",
+  bad: "bg-coal text-cream",
   warn: "bg-cream text-ink",
   good: "bg-cream text-ink",
   empty: "bg-sand/70 text-ink",
-  manual: "bg-coal text-cream",
+  manual: "bg-violet text-ink",
 };
 
 export function Dashboard() {
@@ -135,7 +135,7 @@ function ScoreCard({ report }: { report: DeviceReport }) {
 function CategoryCard({ category: c, stats }: { category: Category; stats: CategoryStats }) {
   const { t, lang } = useLang();
   const tone = CARD_TONE[stats.level];
-  const dark = stats.level === "manual";
+  const dark = stats.level === "bad";
 
   const summary =
     stats.level === "manual"
@@ -151,7 +151,7 @@ function CategoryCard({ category: c, stats }: { category: Category; stats: Categ
         <ArrowBadge tone={dark ? "violet" : "ink"} />
       </div>
       <h2 className="mt-3 text-[1.6rem] font-medium leading-[1.05] tracking-tight xl:text-3xl short:text-2xl">{c.title[lang]}</h2>
-      <p className={`mt-1 line-clamp-2 text-sm ${dark ? "text-mute" : stats.level === "bad" ? "text-ink" : "text-stone"} lg:max-xl:hidden short:hidden`}>
+      <p className={`mt-1 line-clamp-2 text-sm ${dark ? "text-mute" : stats.level === "manual" ? "text-ink" : "text-stone"} lg:max-xl:hidden short:hidden`}>
         {c.short[lang]}
       </p>
       <div className="mt-auto pt-3">

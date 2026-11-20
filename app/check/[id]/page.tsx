@@ -58,8 +58,8 @@ export default function CheckPage() {
   const next = CATEGORIES[(idx + 1) % CATEGORIES.length];
 
   const heroTone =
-    stats.level === "bad" ? "bg-violet text-ink" : isManual ? "bg-coal text-cream" : stats.level === "empty" ? "bg-sand text-ink" : "hero-bg text-ink";
-  const heroDark = isManual;
+    stats.level === "bad" ? "bg-coal text-cream" : isManual ? "bg-violet text-ink" : stats.level === "empty" ? "bg-sand text-ink" : "hero-bg text-ink";
+  const heroDark = stats.level === "bad";
   const need = neededFor(stats.total);
 
   return (
