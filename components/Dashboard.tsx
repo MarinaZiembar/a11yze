@@ -3,18 +3,20 @@
 import Link from "next/link";
 import { CATEGORIES, PRINCIPLES, type Category } from "@/lib/categories";
 import { useLang } from "@/lib/i18n";
-import { auditsFor, statsFor, type CategoryStats } from "@/lib/scoring";
+import { auditsFor, levelFor, statsFor, type CategoryStats } from "@/lib/scoring";
 import { useAnalysis } from "@/lib/store";
 import type { DeviceReport, Level } from "@/lib/types";
-import { ArrowBadge, Asterisk, LEVEL_DOT, Pill, SegmentBar, useCountUp } from "./ui";
+import { ArrowBadge, Asterisk, LEVEL_DOT, Pill, Thermometer, useCountUp } from "./ui";
 import { DeviceSwitch } from "./Switches";
+import { PdfButton } from "./PdfButton";
 
+/** Tarjetas claras como la referencia; las que tienen problemas se destacan en violeta. */
 const CARD_TONE: Record<Level, string> = {
-  bad: "bg-flame text-ink",
+  bad: "bg-violet text-ink",
   warn: "bg-cream text-ink",
   good: "bg-cream text-ink",
-  empty: "bg-coal text-cream",
-  manual: "bg-coal text-cream ring-1 ring-inset ring-cream/15",
+  empty: "bg-sand/70 text-ink",
+  manual: "bg-coal text-cream",
 };
 
 export function Dashboard() {
@@ -38,26 +40,27 @@ export function Dashboard() {
         {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="text-sm text-mute">{t.dash.results}</span>
+            <span className="text-sm text-stone">{t.dash.results}</span>
             <a
               href={report.finalUrl}
               target="_blank"
               rel="noreferrer"
-              className="truncate rounded-full bg-coal px-3 py-1 text-sm font-medium underline-offset-4 hover:underline"
+              className="truncate rounded-full bg-ink px-3 py-1 text-sm font-medium text-cream underline-offset-4 hover:underline"
             >
               {host}
               <span className="sr-only"> {t.dash.opensNew}</span>
             </a>
-            <span className="text-xs text-mute">
+            <span className="text-xs text-stone">
               {t.dash.analyzedAt} {time}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <DeviceSwitch />
+            <PdfButton />
             <button
               type="button"
               onClick={reset}
-              className="rounded-full border border-cream/20 px-4 py-2 text-sm font-medium transition-colors hover:bg-cream hover:text-ink"
+              className="rounded-full border border-ink/20 px-4 py-2 text-sm font-medium transition-colors hover:bg-ink hover:text-cream"
             >
               {t.dash.newAnalysis}
             </button>
@@ -89,12 +92,13 @@ export function Dashboard() {
 function ScoreCard({ report }: { report: DeviceReport }) {
   const { t } = useLang();
   const score = report.score ?? 0;
+  const level = levelFor(report.score);
   const shown = useCountUp(score);
   const counts = report.audits.reduce(
     (acc, a) => ({ ...acc, [a.status]: acc[a.status] + 1 }),
     { pass: 0, fail: 0, manual: 0, na: 0 },
   );
-  const verdict = score >= 90 ? t.dash.verdict.great : score >= 70 ? t.dash.verdict.ok : t.dash.verdict.low;
+  const verdict = level === "good" ? t.dash.verdict.great : level === "warn" ? t.dash.verdict.ok : t.dash.verdict.low;
 
   return (
     <article className="relative flex h-full flex-col overflow-hidden rounded-[2rem] bg-coal p-6 text-cream">
@@ -104,18 +108,18 @@ function ScoreCard({ report }: { report: DeviceReport }) {
         <span className="text-[clamp(4.5rem,9vw,8.5rem)] font-medium leading-none tracking-tighter">{shown}</span>
         <span className="text-mute">{t.dash.outOf}</span>
       </p>
-      <SegmentBar value={score} className="relative mt-4 text-flame" />
+      <Thermometer value={score} level={level} size="lg" className="relative mt-4 text-cream" />
       <p className="relative mt-4 text-lg leading-snug">{verdict}</p>
 
       <dl className="relative mt-auto grid grid-cols-3 gap-2 pt-6">
         {(
           [
-            ["fail", t.dash.fail, "bg-flame"],
-            ["pass", t.dash.pass, "bg-lime"],
-            ["manual", t.dash.manual, "bg-cream"],
+            ["fail", t.dash.fail, "bg-bad"],
+            ["pass", t.dash.pass, "bg-good"],
+            ["manual", t.dash.manual, "bg-violet"],
           ] as const
         ).map(([k, label, dot]) => (
-          <div key={k} className="rounded-2xl bg-ink/60 p-3">
+          <div key={k} className="rounded-2xl bg-ash p-3">
             <dt className="flex items-center gap-1.5 text-xs text-mute">
               <span className={`size-1.5 rounded-full ${dot}`} aria-hidden="true" />
               {label}
@@ -131,23 +135,23 @@ function ScoreCard({ report }: { report: DeviceReport }) {
 function CategoryCard({ category: c, stats }: { category: Category; stats: CategoryStats }) {
   const { t, lang } = useLang();
   const tone = CARD_TONE[stats.level];
-  const dark = stats.level === "empty" || stats.level === "manual";
+  const dark = stats.level === "manual";
 
   const summary =
     stats.level === "manual"
       ? `${stats.manual} ${t.dash.checks}`
       : stats.level === "empty"
         ? t.level.empty
-        : `${stats.fail} ${t.dash.fail} · ${stats.pass} ${t.dash.pass}`;
+        : t.dash.passOf(stats.pass, stats.total);
 
   return (
     <Link href={`/check/${c.id}`} className={`card-link flex h-full flex-col overflow-hidden rounded-[2rem] p-5 ${tone}`}>
       <div className="flex items-start justify-between gap-3">
         <Pill>{PRINCIPLES[c.principle][lang]}</Pill>
-        <ArrowBadge tone={dark ? "cream" : "ink"} />
+        <ArrowBadge tone={dark ? "violet" : "ink"} />
       </div>
       <h2 className="mt-3 text-[1.6rem] font-medium leading-[1.05] tracking-tight xl:text-3xl short:text-2xl">{c.title[lang]}</h2>
-      <p className={`mt-1 line-clamp-2 text-sm ${dark ? "text-mute" : stats.level === "bad" ? "text-ink" : "text-umber"} lg:max-xl:hidden short:hidden`}>
+      <p className={`mt-1 line-clamp-2 text-sm ${dark ? "text-mute" : stats.level === "bad" ? "text-ink" : "text-stone"} lg:max-xl:hidden short:hidden`}>
         {c.short[lang]}
       </p>
       <div className="mt-auto pt-3">
@@ -158,7 +162,7 @@ function CategoryCard({ category: c, stats }: { category: Category; stats: Categ
           </span>
           <span className={dark ? "text-mute" : ""}>{summary}</span>
         </div>
-        {stats.score !== null && <SegmentBar value={stats.score} segments={8} className="mt-2" />}
+        {stats.score !== null && <Thermometer value={stats.score} level={stats.level} className="mt-2.5" />}
         <span className="sr-only">{t.dash.viewMore}</span>
       </div>
     </Link>

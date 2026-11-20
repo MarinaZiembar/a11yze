@@ -117,18 +117,4 @@ export async function runPsi(url: string, strategy: Device, locale: Lang): Promi
   return parseLighthouse(await res.json(), url);
 }
 
-/** Normaliza lo que escribe la persona: agrega https:// y valida que sea una URL pública. */
-export function normalizeUrl(input: unknown): string | null {
-  if (typeof input !== "string") return null;
-  let value = input.trim();
-  if (!value) return null;
-  if (!/^https?:\/\//i.test(value)) value = `https://${value}`;
-  try {
-    const u = new URL(value);
-    if (!["http:", "https:"].includes(u.protocol)) return null;
-    if (!u.hostname.includes(".") || u.hostname === "localhost") return null;
-    return u.toString();
-  } catch {
-    return null;
-  }
-}
+export { normalizeUrl } from "./url";

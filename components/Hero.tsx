@@ -3,13 +3,21 @@
 import { useEffect, useState } from "react";
 import { useLang } from "@/lib/i18n";
 import { useAnalysis } from "@/lib/store";
-import { ArrowBadge, Asterisk } from "./ui";
+import { normalizeUrl } from "@/lib/url";
+import { ArrowBadge, Asterisk, useDebounced } from "./ui";
 
 export function Hero() {
   const { t, lang } = useLang();
   const { analyze, loading, error } = useAnalysis();
   const [url, setUrl] = useState("");
   const [step, setStep] = useState(0);
+  const [touched, setTouched] = useState(false);
+
+  // Debounce: validamos y mostramos la URL normalizada recién cuando la persona deja de tipear.
+  const debouncedUrl = useDebounced(url, 450);
+  const normalized = normalizeUrl(touched ? url : debouncedUrl);
+  const typing = url !== debouncedUrl;
+  const showHint = !loading && url.trim().length > 0 && (!typing || touched);
 
   useEffect(() => {
     if (!loading) return setStep(0);
@@ -19,7 +27,10 @@ export function Hero() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (url.trim() && !loading) analyze(url, lang);
+    setTouched(true);
+    const target = normalizeUrl(url);
+    if (!target || loading) return;
+    analyze(target, lang);
   };
 
   return (
@@ -46,7 +57,7 @@ export function Hero() {
             <label htmlFor="url" className="mb-2 block text-sm font-semibold">
               {t.hero.label}
             </label>
-            <div className="flex flex-col gap-2 rounded-[1.75rem] bg-cream p-1.5 sm:flex-row sm:rounded-full">
+            <div className="flex flex-col gap-2 rounded-[1.75rem] bg-white/80 p-1.5 shadow-[0_10px_30px_-18px_rgb(0_0_0/0.35)] ring-1 ring-ink/10 backdrop-blur-sm sm:flex-row sm:rounded-full">
               <input
                 id="url"
                 name="url"
@@ -58,10 +69,10 @@ export function Hero() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder={t.hero.placeholder}
-                aria-invalid={error === "invalid" || undefined}
-                aria-describedby={error ? "url-error" : undefined}
+                aria-invalid={(touched || showHint) && !normalizeUrl(url) ? true : undefined}
+                aria-describedby={[showHint ? "url-hint" : "", error ? "url-error" : ""].filter(Boolean).join(" ") || undefined}
                 disabled={loading}
-                className="min-w-0 flex-1 rounded-full bg-transparent px-5 py-3 text-lg text-ink placeholder:text-umber"
+                className="min-w-0 flex-1 rounded-full bg-transparent px-5 py-3 text-lg text-ink placeholder:text-stone"
               />
               <button
                 type="submit"
@@ -69,11 +80,23 @@ export function Hero() {
                 className="card-link inline-flex items-center justify-center gap-3 rounded-full bg-ink py-1.5 pl-6 pr-1.5 font-semibold text-cream disabled:opacity-70"
               >
                 {loading ? t.hero.loading : t.hero.cta}
-                <ArrowBadge tone="flame" />
+                <ArrowBadge tone="violet" />
               </button>
             </div>
 
             <div aria-live="polite" className="mt-4 min-h-14">
+              {showHint && (
+                <p id="url-hint" className="mb-2 text-sm">
+                  {normalized ? (
+                    <>
+                      {t.hero.willAnalyze}{" "}
+                      <span className="rounded-full bg-ink px-2 py-0.5 font-mono text-xs text-cream">{normalized}</span>
+                    </>
+                  ) : (
+                    <span className="text-stone">{t.hero.invalidHint}</span>
+                  )}
+                </p>
+              )}
               {loading && (
                 <div className="mx-auto max-w-md">
                   <p className="font-medium">{t.hero.steps[step]}</p>
@@ -94,9 +117,9 @@ export function Hero() {
 
         <ul className="relative mx-auto grid w-full gap-3 pt-10 sm:grid-cols-3 lg:max-w-4xl">
           {t.hero.facts.map((f, i) => (
-            <li key={f.big} className="animate-rise rounded-[1.75rem] bg-cream p-5" style={{ animationDelay: `${200 + i * 90}ms` }}>
+            <li key={f.big} className="animate-rise rounded-[1.75rem] bg-white/60 p-5 ring-1 ring-ink/5 backdrop-blur-sm" style={{ animationDelay: `${200 + i * 90}ms` }}>
               <p className="text-4xl font-medium tracking-tight">{f.big}</p>
-              <p className="mt-6 text-sm leading-snug text-umber">{f.text}</p>
+              <p className="mt-6 text-sm leading-snug text-stone">{f.text}</p>
             </li>
           ))}
         </ul>

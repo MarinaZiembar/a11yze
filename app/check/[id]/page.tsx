@@ -5,17 +5,17 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import { CATEGORIES, PRINCIPLES, getCategory } from "@/lib/categories";
 import { useLang } from "@/lib/i18n";
-import { auditsFor, statsFor } from "@/lib/scoring";
+import { auditsFor, neededFor, statsFor } from "@/lib/scoring";
 import { useAnalysis } from "@/lib/store";
 import type { AuditResult, AuditStatus } from "@/lib/types";
 import { DeviceSwitch } from "@/components/Switches";
-import { ArrowBadge, Asterisk, Inline, LEVEL_DOT, Pill, SegmentBar } from "@/components/ui";
+import { ArrowBadge, Asterisk, Inline, LEVEL_DOT, Pill, Thermometer } from "@/components/ui";
 
 const STATUS_DOT: Record<AuditStatus, string> = {
-  pass: "bg-lime",
-  fail: "bg-flame",
-  manual: "bg-cream ring-1 ring-ink/40",
-  na: "bg-sand",
+  pass: "bg-good",
+  fail: "bg-bad",
+  manual: "bg-violet",
+  na: "bg-sand ring-1 ring-ink/20",
 };
 
 export default function CheckPage() {
@@ -31,12 +31,12 @@ export default function CheckPage() {
   if (!category || (ready && !analysis)) {
     return (
       <main id="main" tabIndex={-1} className="px-4 outline-none lg:px-6">
-        <div className="grid min-h-[60dvh] place-items-center rounded-[2.5rem] bg-coal p-10 text-center">
+        <div className="grid min-h-[60dvh] place-items-center rounded-[2.5rem] bg-coal p-10 text-center text-cream">
           <div>
             <h1 className="text-3xl font-medium tracking-tight">{category ? t.detail.noData : t.detail.notFound}</h1>
             <Link href="/" className="card-link mt-6 inline-flex items-center gap-3 rounded-full bg-cream py-1.5 pl-5 pr-1.5 font-medium text-ink">
               {t.detail.goHome}
-              <ArrowBadge tone="flame" />
+              <ArrowBadge tone="violet" />
             </Link>
           </div>
         </div>
@@ -57,8 +57,10 @@ export default function CheckPage() {
   const prev = CATEGORIES[(idx - 1 + CATEGORIES.length) % CATEGORIES.length];
   const next = CATEGORIES[(idx + 1) % CATEGORIES.length];
 
-  const heroTone = stats.level === "bad" ? "bg-flame text-ink" : stats.level === "empty" || isManual ? "bg-coal text-cream" : "bg-cream text-ink";
-  const heroDark = heroTone.includes("bg-coal");
+  const heroTone =
+    stats.level === "bad" ? "bg-violet text-ink" : isManual ? "bg-coal text-cream" : stats.level === "empty" ? "bg-sand text-ink" : "hero-bg text-ink";
+  const heroDark = isManual;
+  const need = neededFor(stats.total);
 
   return (
     <main id="main" tabIndex={-1} className="px-4 pb-6 outline-none lg:px-6">
@@ -95,7 +97,12 @@ export default function CheckPage() {
               </div>
               <DeviceSwitch tone={heroDark ? "dark" : "light"} />
             </div>
-            {stats.score !== null && <SegmentBar value={stats.score} className="mt-4" />}
+            {stats.score !== null && (
+              <>
+                <Thermometer value={stats.score} level={stats.level} size="lg" className="mt-4" />
+                <p className="mt-2 text-sm">{t.detail.thermo(stats.pass, stats.total, need.good, need.warn)}</p>
+              </>
+            )}
             <nav aria-label={`${t.detail.prev} / ${t.detail.next}`} className="mt-6 flex justify-between gap-3 text-sm">
               <Link href={`/check/${prev.id}`} className="rounded-full underline-offset-4 hover:underline">
                 ← {prev.title[lang]}
@@ -109,7 +116,7 @@ export default function CheckPage() {
 
         {/* Qué analizamos */}
         <Panel title={t.detail.analyzed} className="bg-cream text-ink lg:col-span-3" delay={60}>
-          <p className="text-sm leading-relaxed text-umber">{category.analyzed[lang]}</p>
+          <p className="text-sm leading-relaxed text-stone">{category.analyzed[lang]}</p>
           {sorted.length > 0 && (
             <ul className="mt-4 space-y-2">
               {sorted.map((a) => (
@@ -132,7 +139,7 @@ export default function CheckPage() {
               <p className="text-sm text-mute">{t.detail.manualIntro}</p>
               <ul className="mt-3 space-y-3">
                 {audits.map((a) => (
-                  <li key={a.id} className="rounded-2xl bg-ink/60 p-3 text-sm">
+                  <li key={a.id} className="rounded-2xl bg-ash p-3 text-sm">
                     <p className="font-medium">
                       <Inline text={a.title} />
                     </p>
@@ -169,7 +176,7 @@ export default function CheckPage() {
         </Panel>
 
         {/* Recursos */}
-        <Panel title={t.detail.resources} className="bg-flame text-ink lg:col-span-3" delay={240}>
+        <Panel title={t.detail.resources} className="bg-violet text-ink lg:col-span-3" delay={240}>
           <ul className="space-y-2">
             {category.resources.map((r) => (
               <li key={r.href}>
@@ -207,12 +214,12 @@ function Panel({ title, className, delay, children }: { title: string; className
 function Finding({ audit: a }: { audit: AuditResult }) {
   const { t } = useLang();
   return (
-    <li className="rounded-2xl bg-ink/60 p-4 text-sm">
+    <li className="rounded-2xl bg-ash p-4 text-sm">
       <div className="flex items-start justify-between gap-3">
         <p className="font-medium leading-snug">
           <Inline text={a.title} />
         </p>
-        {a.total > 0 && <span className="shrink-0 rounded-full bg-flame px-2 py-0.5 text-xs font-semibold text-ink">{t.detail.elements(a.total)}</span>}
+        {a.total > 0 && <span className="shrink-0 rounded-full bg-violet px-2 py-0.5 text-xs font-semibold text-ink">{t.detail.elements(a.total)}</span>}
       </div>
       {a.items.length > 0 && (
         <ul className="mt-3 space-y-2">
@@ -226,7 +233,7 @@ function Finding({ audit: a }: { audit: AuditResult }) {
         </ul>
       )}
       {a.docsUrl && (
-        <a href={a.docsUrl} target="_blank" rel="noreferrer" className="mt-3 inline-block text-xs text-flame underline underline-offset-4">
+        <a href={a.docsUrl} target="_blank" rel="noreferrer" className="mt-3 inline-block text-xs text-violet underline underline-offset-4">
           {t.detail.docs}
           <span className="sr-only"> {t.dash.opensNew}</span>
         </a>

@@ -15,11 +15,11 @@ export function Asterisk({ className = "" }: { className?: string }) {
 }
 
 /** Círculo con flecha ↗ estilo referencia. Gira al hacer hover sobre la card (.card-link). */
-export function ArrowBadge({ tone = "ink" }: { tone?: "ink" | "cream" | "flame" }) {
+export function ArrowBadge({ tone = "ink" }: { tone?: "ink" | "cream" | "violet" }) {
   const styles = {
     ink: "bg-ink text-cream",
     cream: "bg-cream text-ink",
-    flame: "bg-flame text-ink",
+    violet: "bg-violet text-ink",
   }[tone];
   return (
     <span className={`arrow grid size-9 shrink-0 place-items-center rounded-full ${styles}`} aria-hidden="true">
@@ -49,11 +49,11 @@ export function Inline({ text }: { text: string }) {
 }
 
 export const LEVEL_DOT: Record<Level, string> = {
-  good: "bg-lime",
-  warn: "bg-flame",
-  bad: "bg-ink",
-  empty: "bg-mute",
-  manual: "bg-lime",
+  good: "bg-good",
+  warn: "bg-warn",
+  bad: "bg-bad",
+  empty: "bg-sand ring-1 ring-ink/20",
+  manual: "bg-violet",
 };
 
 export function Pill({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -64,18 +64,28 @@ export function Pill({ children, className = "" }: { children: React.ReactNode; 
   );
 }
 
-/** Barra segmentada (como el progreso de la referencia lime). */
-export function SegmentBar({ value, segments = 10, className = "" }: { value: number; segments?: number; className?: string }) {
-  const filled = Math.round((value / 100) * segments);
+/**
+ * Termómetro horizontal: bulbo + tubo que se llena según el % de chequeos que pasan.
+ * Verde ≥ 75 %, amarillo 40–74 %, rojo < 40 % (ver lib/scoring.ts).
+ * Las marcas finas del tubo muestran dónde cambia de color. Es decorativo:
+ * el estado siempre está también en texto al lado.
+ */
+export function Thermometer({ value, level, className = "", size = "md" }: { value: number; level: Level; className?: string; size?: "md" | "lg" }) {
+  const fill = level === "empty" || level === "manual" ? "bg-sand" : LEVEL_DOT[level];
+  const tube = size === "lg" ? "h-3.5" : "h-2.5";
+  const bulb = size === "lg" ? "size-6" : "size-4";
   return (
-    <div className={`flex gap-1 ${className}`} aria-hidden="true">
-      {Array.from({ length: segments }, (_, i) => (
+    <div className={`flex items-center ${className}`} aria-hidden="true">
+      <span className={`relative z-10 shrink-0 rounded-full ring-[3px] ring-current/15 ${bulb} ${fill}`} />
+      <span className={`relative -ml-1.5 flex-1 overflow-hidden rounded-r-full bg-current/10 ${tube}`}>
         <span
-          key={i}
-          className={`h-1.5 flex-1 rounded-full transition-colors duration-700 ${i < filled ? "bg-current" : "bg-current/15"}`}
-          style={{ transitionDelay: `${i * 40}ms` }}
+          className={`absolute inset-y-0 left-0 origin-left animate-fill rounded-r-full ${fill}`}
+          style={{ width: `${Math.max(4, Math.min(100, value))}%` }}
         />
-      ))}
+        {[40, 75].map((m) => (
+          <span key={m} className="absolute inset-y-0 w-px bg-current/25" style={{ left: `${m}%` }} />
+        ))}
+      </span>
     </div>
   );
 }
@@ -103,4 +113,14 @@ export function useCountUp(target: number, duration = 900) {
     return () => cancelAnimationFrame(raf.current);
   }, [target, duration]);
   return value;
+}
+
+/** Devuelve el valor recién cuando dejó de cambiar durante `delay` ms. */
+export function useDebounced<T>(value: T, delay = 400) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
 }

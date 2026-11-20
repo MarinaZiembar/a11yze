@@ -6,7 +6,7 @@ import type { ErrorCode, Lang, Level } from "./types";
 const es = {
   skip: "Saltar al contenido",
   langLabel: "Idioma",
-  home: "A11yze, ir al inicio",
+  home: "A11yze, nuevo análisis",
   hero: {
     kicker: "Auditoría de accesibilidad web",
     title1: "¿Qué tan",
@@ -27,6 +27,8 @@ const es = {
       "Armando tu reporte…",
     ],
     wait: "Puede tardar hasta un minuto: corremos Lighthouse dos veces.",
+    willAnalyze: "Vamos a analizar",
+    invalidHint: "Escribí un dominio completo, por ejemplo ejemplo.com",
     facts: [
       { big: "1 de 6", text: "personas en el mundo vive con una discapacidad significativa (OMS)." },
       { big: "4", text: "principios: perceptible, operable, comprensible y robusto." },
@@ -46,6 +48,10 @@ const es = {
     fail: "fallan",
     manual: "a revisar",
     checks: "chequeos",
+    passOf: (p: number, t: number) => `pasan ${p} de ${t}`,
+    pdf: "Descargar PDF",
+    pdfLoading: "Generando PDF…",
+    pdfError: "No pudimos generar el PDF. Probá de nuevo.",
     viewMore: "Ver más",
     opensNew: "(se abre en una pestaña nueva)",
     verdict: {
@@ -77,6 +83,8 @@ const es = {
     next: "Siguiente",
     status: { pass: "Pasa", fail: "Falla", manual: "Manual", na: "No aplica" },
     noData: "Todavía no hay ningún análisis.",
+    thermo: (pass: number, total: number, good: number, warn: number) =>
+      `Pasan ${pass} de ${total}. Verde desde ${good}, amarillo desde ${warn}.`,
     goHome: "Analizar una web",
     notFound: "Esta categoría no existe.",
   },
@@ -101,7 +109,7 @@ type Dict = typeof es;
 const en: Dict = {
   skip: "Skip to content",
   langLabel: "Language",
-  home: "A11yze, go home",
+  home: "A11yze, new analysis",
   hero: {
     kicker: "Web accessibility audit",
     title1: "How",
@@ -122,6 +130,8 @@ const en: Dict = {
       "Putting your report together…",
     ],
     wait: "It can take up to a minute: we run Lighthouse twice.",
+    willAnalyze: "We’ll analyze",
+    invalidHint: "Type a full domain, for example example.com",
     facts: [
       { big: "1 in 6", text: "people worldwide live with a significant disability (WHO)." },
       { big: "4", text: "principles: perceivable, operable, understandable and robust." },
@@ -141,6 +151,10 @@ const en: Dict = {
     fail: "fail",
     manual: "to review",
     checks: "checks",
+    passOf: (p: number, t: number) => `${p} of ${t} pass`,
+    pdf: "Download PDF",
+    pdfLoading: "Generating PDF…",
+    pdfError: "We couldn’t generate the PDF. Please try again.",
     viewMore: "See more",
     opensNew: "(opens in a new tab)",
     verdict: {
@@ -166,6 +180,8 @@ const en: Dict = {
     next: "Next",
     status: { pass: "Pass", fail: "Fail", manual: "Manual", na: "N/A" },
     noData: "There’s no analysis yet.",
+    thermo: (pass: number, total: number, good: number, warn: number) =>
+      `${pass} of ${total} pass. Green from ${good}, yellow from ${warn}.`,
     goHome: "Analyze a site",
     notFound: "This category doesn’t exist.",
   },
