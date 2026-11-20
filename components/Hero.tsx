@@ -26,12 +26,9 @@ export function Hero() {
     <main id="main" tabIndex={-1} className="px-4 pb-6 outline-none lg:px-6">
       <section className="hero-bg relative flex min-h-[calc(100dvh-6rem)] flex-col items-center overflow-hidden rounded-[2.5rem] p-6 text-center text-ink sm:p-10 lg:p-14">
         {/* Ornamentos sutiles */}
-        <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/2">
-          <Asterisk className="size-[26rem] animate-spin-slow text-ink/[0.08] lg:size-[38rem]" />
+        <div aria-hidden="true" className="pointer-events-none absolute -right-24 top-1/2 -translate-y-1/2 lg:-right-16">
+          <Asterisk className="size-[20rem] animate-spin-slow text-ink/10 lg:size-[30rem]" />
         </div>
-        <p aria-hidden="true" className="ghost-text pointer-events-none absolute -bottom-6 left-1/2 -translate-x-1/2 select-none text-[22vw] font-semibold leading-none tracking-tighter lg:-bottom-10">
-          A11YZE
-        </p>
 
         <div className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center">
           <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-ink/25 px-3 py-1 text-sm font-medium">
@@ -45,7 +42,7 @@ export function Hero() {
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed sm:text-lg">{t.hero.lead}</p>
 
-          <form onSubmit={onSubmit} className="mx-auto mt-8 w-full max-w-xl" noValidate>
+          <form onSubmit={onSubmit} className="mx-auto mt-8 w-full max-w-xl lg:max-w-3xl" noValidate>
             <label htmlFor="url" className="mb-2 block text-sm font-semibold">
               {t.hero.label}
             </label>
