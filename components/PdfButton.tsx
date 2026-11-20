@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLang } from "@/lib/i18n";
-import { SITE } from "@/lib/site";
 import { useAnalysis } from "@/lib/store";
 import { ArrowBadge, Asterisk } from "./ui";
 
@@ -73,7 +72,6 @@ function ThanksModal({ open, onClose }: { open: boolean; onClose: () => void }) 
   const { t } = useLang();
   const m = t.dash.modal;
   const ref = useRef<HTMLDialogElement>(null);
-  const [msg, setMsg] = useState("");
   const [copied, setCopied] = useState(false);
   const [siteUrl, setSiteUrl] = useState("https://a11yze.vercel.app");
 
@@ -87,7 +85,6 @@ function ThanksModal({ open, onClose }: { open: boolean; onClose: () => void }) 
   }, [open]);
 
   const shareText = `${m.shareText} ${siteUrl}`;
-  const mailto = `mailto:${SITE.email}?subject=${encodeURIComponent("A11yze ✦ mensajito")}&body=${encodeURIComponent(msg)}`;
   const shares = [
     { label: "WhatsApp", href: `https://wa.me/?text=${encodeURIComponent(shareText)}` },
     { label: "LinkedIn", href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(siteUrl)}` },
@@ -143,29 +140,7 @@ function ThanksModal({ open, onClose }: { open: boolean; onClose: () => void }) 
           {m.body}
         </p>
 
-        <form
-          className="relative mt-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            window.location.href = mailto;
-          }}
-        >
-          <label htmlFor="thanks-msg" className="mb-1.5 block text-sm font-semibold">
-            {m.msgLabel}
-          </label>
-          <textarea
-            id="thanks-msg"
-            rows={3}
-            value={msg}
-            onChange={(e) => setMsg(e.target.value)}
-            placeholder={m.msgPlaceholder}
-            className="w-full resize-none rounded-2xl bg-white/80 px-4 py-3 text-base text-ink ring-1 ring-ink/10 placeholder:text-stone"
-          />
-          <button type="submit" className="card-link mt-2 inline-flex items-center gap-3 rounded-full bg-ink py-1.5 pl-5 pr-1.5 text-sm font-semibold text-cream">
-            {m.send}
-            <ArrowBadge tone="violet" />
-          </button>
-        </form>
+        <FeedbackForm />
 
         <div className="relative mt-6 rounded-2xl bg-white/60 p-4 ring-1 ring-ink/5">
           <div className="flex flex-wrap items-center gap-2">
@@ -200,5 +175,126 @@ function ThanksModal({ open, onClose }: { open: boolean; onClose: () => void }) 
         </p>
       </div>
     </dialog>
+  );
+}
+
+type FormState = "idle" | "sending" | "sent" | "error";
+type FormError = "empty" | "email" | "rate" | "generic";
+
+/** Form de feedback: POST a /api/feedback, que lo envía con Resend. */
+function FeedbackForm() {
+  const { t, lang } = useLang();
+  const m = t.dash.modal;
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [website, setWebsite] = useState(""); // honeypot
+  const [state, setState] = useState<FormState>("idle");
+  const [error, setError] = useState<FormError | null>(null);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (state === "sending") return;
+    if (message.trim().length < 2) {
+      setError("empty");
+      setState("error");
+      return;
+    }
+    setState("sending");
+    setError(null);
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, message, website, lang }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const code = data?.error;
+        setError(code === "empty" || code === "email" || code === "rate" ? code : "generic");
+        setState("error");
+        return;
+      }
+      setState("sent");
+    } catch {
+      setError("generic");
+      setState("error");
+    }
+  };
+
+  if (state === "sent") {
+    return (
+      <p role="status" className="relative mt-6 rounded-2xl bg-ink px-4 py-3 text-base font-medium text-cream">
+        {m.sent}
+      </p>
+    );
+  }
+
+  const input = "w-full rounded-2xl bg-white/80 px-4 py-2.5 text-base text-ink ring-1 ring-ink/10 placeholder:text-stone";
+
+  return (
+    <form className="relative mt-6 space-y-3" onSubmit={onSubmit} noValidate>
+      <div>
+        <label htmlFor="fb-msg" className="mb-1.5 block text-sm font-semibold">
+          {m.msgLabel}
+        </label>
+        <textarea
+          id="fb-msg"
+          rows={3}
+          required
+          maxLength={2000}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder={m.msgPlaceholder}
+          aria-invalid={error === "empty" || undefined}
+          aria-describedby={error ? "fb-error" : undefined}
+          className={`${input} resize-none py-3`}
+        />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label htmlFor="fb-name" className="mb-1.5 block text-xs font-semibold">
+            {m.nameLabel}
+          </label>
+          <input id="fb-name" autoComplete="name" maxLength={80} value={name} onChange={(e) => setName(e.target.value)} className={input} />
+        </div>
+        <div>
+          <label htmlFor="fb-email" className="mb-1.5 block text-xs font-semibold">
+            {m.emailLabel}
+          </label>
+          <input
+            id="fb-email"
+            type="email"
+            autoComplete="email"
+            maxLength={120}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            aria-invalid={error === "email" || undefined}
+            aria-describedby={error ? "fb-error" : undefined}
+            className={input}
+          />
+        </div>
+      </div>
+      {/* Honeypot: invisible para personas y lectores de pantalla */}
+      <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+        <label htmlFor="fb-website">Website</label>
+        <input id="fb-website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="submit"
+          disabled={state === "sending"}
+          className="card-link inline-flex items-center gap-3 rounded-full bg-ink py-1.5 pl-5 pr-1.5 text-sm font-semibold text-cream disabled:opacity-70"
+        >
+          {state === "sending" ? m.sending : m.send}
+          <ArrowBadge tone="violet" />
+        </button>
+        {error && (
+          <p id="fb-error" role="alert" className="text-sm font-medium">
+            {m.formErrors[error]}
+          </p>
+        )}
+      </div>
+    </form>
   );
 }

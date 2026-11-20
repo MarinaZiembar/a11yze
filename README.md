@@ -32,6 +32,12 @@ https://developers.google.com/speed/docs/insights/v5/get-started → "Get a key"
 
 Deployado en Vercel desde este repo: cada push a `main` publica. La ruta `/api/analyze` tiene `maxDuration = 60`; cada corrida de Lighthouse tiene timeout de 55 s. Cargá `PSI_API_KEY` en Vercel → Settings → Environment Variables y hacé redeploy.
 
+## Form de feedback (Resend)
+
+La modal que aparece al descargar el PDF tiene un form que hace POST a `/api/feedback`, que envía el mail con la API de Resend (sin SDK). Tiene honeypot anti-bots y un límite de 5 mensajes cada 10 minutos por IP.
+
+Variables en Vercel: `RESEND_API_KEY` (obligatoria), `FEEDBACK_TO` y `FEEDBACK_FROM` (opcionales). Con el remitente de prueba `onboarding@resend.dev`, Resend solo entrega al mail de tu cuenta; para otro destino verificá un dominio (ej. holaasoymaru.com.ar) y usá `A11yze <hola@holaasoymaru.com.ar>`.
+
 ## Personalizar
 
 - Contacto del footer: `lib/site.ts`
