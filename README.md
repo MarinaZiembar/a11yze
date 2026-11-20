@@ -28,7 +28,7 @@ https://developers.google.com/speed/docs/insights/v5/get-started → "Get a key"
 
 ## Deploy
 
-Deployado en Netlify (Next.js se detecta solo; ver `netlify.toml`). La ruta `/api/analyze` corre como función con límite de 60 s; cada corrida de Lighthouse tiene timeout de 55 s. Cargá `PSI_API_KEY` en Netlify → Project configuration → Environment variables (scope: Functions).
+Deployado en Vercel desde este repo: cada push a `main` publica. La ruta `/api/analyze` tiene `maxDuration = 60`; cada corrida de Lighthouse tiene timeout de 55 s. Cargá `PSI_API_KEY` en Vercel → Settings → Environment Variables y hacé redeploy.
 
 ## Personalizar
 
