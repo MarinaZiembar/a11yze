@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Inter_Tight } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SkipLink } from "@/components/SkipLink";
 import "./globals.css";
 
-const inter = Inter_Tight({ subsets: ["latin"], variable: "--font-inter-tight", display: "swap" });
+const bricolage = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-bricolage", display: "swap" });
 
 export const metadata: Metadata = {
   title: "A11yze — Análisis de accesibilidad web",
@@ -19,7 +19,7 @@ export const viewport: Viewport = { themeColor: "#eae8df" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={inter.variable}>
+    <html lang="es" className={bricolage.variable}>
       <body className="min-h-dvh font-sans">
         <Providers>
           <SkipLink />

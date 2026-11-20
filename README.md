@@ -4,7 +4,7 @@ Analizador de accesibilidad web: pegás una URL y obtenés un reporte en **mobil
 
 ## Stack
 
-Next.js (App Router) · React · TypeScript · Tailwind CSS v4
+Next.js (App Router) · React · TypeScript · Tailwind CSS v4 · Bricolage Grotesque
 
 ## Cómo funciona
 
