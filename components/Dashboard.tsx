@@ -37,9 +37,35 @@ export function Dashboard() {
         {t.dash.results} {host}
       </h1>
       <section className="flex flex-col gap-3 lg:h-[calc(100dvh-4.5rem-1.5rem)]">
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+        {/* Toolbar
+            Mobile:  info · [Nuevo análisis][Descargar PDF] · toggle a la derecha
+            Desktop: [Nuevo análisis][Descargar PDF] info ............ toggle (una sola fila) */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="order-2 flex flex-wrap items-center gap-2 lg:order-1">
+            <button
+              type="button"
+              onClick={reset}
+              className="group inline-flex items-center gap-2 rounded-full border border-ink/20 py-2 pl-3.5 pr-4 text-sm font-medium transition-colors hover:bg-ink hover:text-cream"
+            >
+              <svg
+                viewBox="0 0 16 16"
+                className="size-4 transition-transform duration-500 group-hover:-rotate-180"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M2.75 8a5.25 5.25 0 1 0 1.6-3.77" />
+                <path d="M2.5 2.5v3h3" />
+              </svg>
+              {t.dash.newAnalysis}
+            </button>
+            <PdfButton />
+          </div>
+
+          <div className="order-1 flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1 lg:order-2 lg:w-auto lg:flex-1 lg:pl-2">
             <span className="text-sm text-stone">{t.dash.results}</span>
             <a
               href={report.finalUrl}
@@ -54,16 +80,9 @@ export function Dashboard() {
               {t.dash.analyzedAt} {time}
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+
+          <div className="order-3 flex w-full justify-end lg:w-auto">
             <DeviceSwitch />
-            <button
-              type="button"
-              onClick={reset}
-              className="rounded-full border border-ink/20 px-4 py-2 text-sm font-medium transition-colors hover:bg-ink hover:text-cream"
-            >
-              {t.dash.newAnalysis}
-            </button>
-            <PdfButton />
           </div>
         </div>
 
