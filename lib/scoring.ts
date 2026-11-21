@@ -64,3 +64,17 @@ export function statsFor(audits: AuditResult[], category: Category): CategorySta
   const level: Level = category.id === "manual" ? "manual" : levelFor(score);
   return { pass, fail, manual, na, total, score, level };
 }
+
+/**
+ * Puntaje general de A11yze: % de chequeos automáticos que pasan sobre los que aplican,
+ * con el mismo criterio que el termómetro de cada categoría.
+ * No usamos el puntaje de Lighthouse como principal porque Lighthouse pondera las reglas
+ * y algunas tienen peso 0: una regla puede fallar y Lighthouse igual dar 100.
+ * Se redondea hacia abajo, así 100 significa que pasó absolutamente todo.
+ */
+export function overallScore(report: DeviceReport): number | null {
+  const scored = report.audits.filter((a) => a.status === "pass" || a.status === "fail");
+  if (!scored.length) return null;
+  const pass = scored.filter((a) => a.status === "pass").length;
+  return Math.floor((pass / scored.length) * 100);
+}

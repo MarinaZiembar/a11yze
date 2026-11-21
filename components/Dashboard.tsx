@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { CATEGORIES, PRINCIPLES, type Category } from "@/lib/categories";
 import { useLang } from "@/lib/i18n";
-import { auditsFor, levelFor, statsFor, type CategoryStats } from "@/lib/scoring";
+import { auditsFor, levelFor, overallScore, statsFor, type CategoryStats } from "@/lib/scoring";
 import { useAnalysis } from "@/lib/store";
 import type { DeviceReport, Level } from "@/lib/types";
 import { ArrowBadge, Asterisk, LEVEL_DOT, Pill, Thermometer, useCountUp } from "./ui";
@@ -38,7 +38,7 @@ export function Dashboard() {
       </h1>
       <section className="flex flex-col gap-3 lg:h-[calc(100dvh-4.5rem-1.5rem)]">
         {/* Toolbar
-            Mobile:  info · [Nuevo análisis][Descargar PDF] · toggle a la derecha
+            Mobile:  info · [Nuevo análisis][Descargar PDF] · toggle a la izquierda
             Desktop: [Nuevo análisis][Descargar PDF] info ............ toggle (una sola fila) */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="order-2 flex flex-wrap items-center gap-2 lg:order-1">
@@ -81,7 +81,7 @@ export function Dashboard() {
             </span>
           </div>
 
-          <div className="order-3 flex w-full justify-end lg:w-auto">
+          <div className="order-3 flex w-full justify-start lg:w-auto">
             <DeviceSwitch />
           </div>
         </div>
@@ -110,8 +110,9 @@ export function Dashboard() {
 
 function ScoreCard({ report }: { report: DeviceReport }) {
   const { t } = useLang();
-  const score = report.score ?? 0;
-  const level = levelFor(report.score);
+  const own = overallScore(report);
+  const score = own ?? 0;
+  const level = levelFor(own);
   const shown = useCountUp(score);
   const counts = report.audits.reduce(
     (acc, a) => ({ ...acc, [a.status]: acc[a.status] + 1 }),
@@ -129,6 +130,11 @@ function ScoreCard({ report }: { report: DeviceReport }) {
       </p>
       <Thermometer value={score} level={level} size="lg" className="relative mt-4 text-cream" />
       <p className="relative mt-4 text-lg leading-snug">{verdict}</p>
+      {report.score !== null && (
+        <p className="relative mt-2 text-xs text-mute">
+          {t.dash.lighthouse}: {report.score}/100 · {t.dash.lighthouseNote}
+        </p>
+      )}
 
       <dl className="relative mt-auto grid grid-cols-3 gap-2 pt-6">
         {(

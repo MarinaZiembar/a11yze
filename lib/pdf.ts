@@ -5,7 +5,7 @@
  */
 import { LineCapStyle, PDFDocument, PDFName, PDFString, StandardFonts, rgb, type PDFFont, type PDFPage, type RGB } from "pdf-lib";
 import { CATEGORIES, PRINCIPLES, type Category } from "./categories";
-import { auditsFor, levelFor, statsFor, THRESHOLDS, type CategoryStats } from "./scoring";
+import { auditsFor, levelFor, overallScore, statsFor, THRESHOLDS, type CategoryStats } from "./scoring";
 import { SITE } from "./site";
 import type { Analysis, AuditResult, Device, Lang, Level } from "./types";
 
@@ -46,7 +46,7 @@ const TXT = {
     verdict: { good: "Muy buena base. Queda pulir detalles.", warn: "Va bien, pero hay barreras importantes.", bad: "Hay varias barreras para muchas personas.", empty: "", manual: "" } as Record<Level, string>,
     howTo: "Cómo leer este reporte",
     howToBody:
-      "Cada categoría agrupa chequeos automáticos de Lighthouse según los principios de la W3C. El termómetro muestra qué parte de los chequeos que aplican a la página pasan.",
+      "Cada categoría agrupa chequeos automáticos de Lighthouse según los principios de la W3C. El termómetro muestra qué parte de los chequeos que aplican a la página pasan. El puntaje general usa el mismo criterio: 100 solo si pasan todos.",
     legend: [
       ["good", `Verde: pasa ${THRESHOLDS.good}% o más`],
       ["warn", `Amarillo: entre ${THRESHOLDS.warn}% y ${THRESHOLDS.good - 1}%`],
@@ -89,7 +89,7 @@ const TXT = {
     verdict: { good: "Solid foundation. Some details to polish.", warn: "Going well, but there are important barriers.", bad: "There are several barriers for many people.", empty: "", manual: "" } as Record<Level, string>,
     howTo: "How to read this report",
     howToBody:
-      "Each category groups Lighthouse automated checks following the W3C principles. The thermometer shows how many of the checks that apply to the page pass.",
+      "Each category groups Lighthouse automated checks following the W3C principles. The thermometer shows how many of the checks that apply to the page pass. The overall score uses the same rule: 100 only if every check passes.",
     legend: [
       ["good", `Green: ${THRESHOLDS.good}% or more pass`],
       ["warn", `Yellow: between ${THRESHOLDS.warn}% and ${THRESHOLDS.good - 1}%`],
@@ -340,8 +340,9 @@ function cover(ctx: Ctx, a: Analysis) {
   (["desktop", "mobile"] as Device[]).forEach((d, i) => {
     const r = a[d];
     const x = M + i * (cardW + 12);
-    const score = r.score ?? 0;
-    const level = levelFor(r.score);
+    const own = overallScore(r);
+    const score = own ?? 0;
+    const level = levelFor(own);
     rr(p, x, y, cardW, cardH, 22, C.coal);
     pill(p, bold, t.device[d], x + 18, y + 18, C.cream, C.ash);
     text(p, reg, t.overall, x + cardW - 18 - reg.widthOfTextAtSize(t.overall, 8), y + 30, 8, C.mute);

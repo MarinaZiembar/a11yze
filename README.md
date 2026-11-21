@@ -12,6 +12,7 @@ Next.js (App Router) · React · TypeScript · Tailwind CSS v4 · Bricolage Grot
 - `lib/psi.ts` normaliza el resultado de Lighthouse: estado de cada regla, elementos afectados (snippet + explicación) y link a la documentación.
 - `lib/categories.ts` agrupa las reglas en 9 categorías + una de **revisión manual**, con el texto en ES/EN de qué se analiza, estrategias y recursos (W3C WAI, WCAG 2.2, WebAIM). Las reglas nuevas de Lighthouse que no estén mapeadas caen en una categoría por su grupo, así no se pierden.
 - **Termómetro** (`lib/scoring.ts`): % de chequeos que pasan sobre los que aplican. Verde ≥ 75 %, amarillo 40–74 %, rojo < 40 %. Ej.: con 8 chequeos, verde desde 6, amarillo desde 4.
+- **Puntaje general**: mismo criterio que el termómetro (pasan / aplican, redondeado hacia abajo), así 100 = pasó todo. El puntaje de Lighthouse se muestra aparte porque pondera las reglas y algunas tienen peso 0.
 - **PDF** (`lib/pdf.ts`): se genera en el navegador con pdf-lib (portada con ambos puntajes, resumen por categoría, detalle con soluciones y links, revisión manual).
 - El resultado queda en `sessionStorage`, así las páginas `/check/[id]` funcionan aunque recargues.
 
