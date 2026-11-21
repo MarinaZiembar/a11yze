@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import { CATEGORIES, PRINCIPLES, getCategory } from "@/lib/categories";
 import { useLang } from "@/lib/i18n";
-import { auditsFor, neededFor, statsFor } from "@/lib/scoring";
+import { auditsFor, statsFor } from "@/lib/scoring";
 import { useAnalysis } from "@/lib/store";
 import type { AuditResult, AuditStatus } from "@/lib/types";
 import { DeviceSwitch } from "@/components/Switches";
@@ -60,7 +60,6 @@ export default function CheckPage() {
   const heroTone =
     stats.level === "bad" ? "bg-coal text-cream" : isManual ? "bg-violet text-ink" : stats.level === "empty" ? "bg-sand text-ink" : "hero-bg text-ink";
   const heroDark = stats.level === "bad";
-  const need = neededFor(stats.total);
 
   return (
     <main id="main" tabIndex={-1} className="px-4 pb-6 outline-none lg:px-6">
@@ -102,15 +101,32 @@ export default function CheckPage() {
             {stats.score !== null && (
               <>
                 <Thermometer value={stats.score} level={stats.level} size="lg" className="mt-4" />
-                <p className="mt-2 text-sm">{t.detail.thermo(stats.pass, stats.total, need.good, need.warn)}</p>
+                <p className="mt-2 text-sm">{t.detail.thermo(stats.pass, stats.total)}</p>
               </>
             )}
+            {/* Cada link ocupa como máximo la mitad: una línea, ellipsis y flecha centrada al costado */}
             <nav aria-label={`${t.detail.prev} / ${t.detail.next}`} className="mt-6 flex justify-between gap-3 text-sm">
-              <Link href={`/check/${prev.id}`} className="rounded-full underline-offset-4 hover:underline">
-                ← {prev.title[lang]}
+              <Link
+                href={`/check/${prev.id}`}
+                title={prev.title[lang]}
+                className="group flex max-w-[calc(50%-0.375rem)] min-w-0 items-center gap-2 rounded-full"
+              >
+                <span aria-hidden="true" className="shrink-0 transition-transform group-hover:-translate-x-0.5">←</span>
+                <span className="truncate underline-offset-4 group-hover:underline">
+                  <span className="sr-only">{t.detail.prev}: </span>
+                  {prev.title[lang]}
+                </span>
               </Link>
-              <Link href={`/check/${next.id}`} className="rounded-full text-right underline-offset-4 hover:underline">
-                {next.title[lang]} →
+              <Link
+                href={`/check/${next.id}`}
+                title={next.title[lang]}
+                className="group ml-auto flex max-w-[calc(50%-0.375rem)] min-w-0 items-center gap-2 rounded-full"
+              >
+                <span className="truncate underline-offset-4 group-hover:underline">
+                  <span className="sr-only">{t.detail.next}: </span>
+                  {next.title[lang]}
+                </span>
+                <span aria-hidden="true" className="shrink-0 transition-transform group-hover:translate-x-0.5">→</span>
               </Link>
             </nav>
           </div>

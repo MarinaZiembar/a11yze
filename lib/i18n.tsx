@@ -108,8 +108,7 @@ const es = {
     next: "Siguiente",
     status: { pass: "Pasa", fail: "Falla", manual: "Manual", na: "No aplica" },
     noData: "Todavía no hay ningún análisis.",
-    thermo: (pass: number, total: number, good: number, warn: number) =>
-      `Pasan ${pass} de ${total}. Verde desde ${good}, amarillo desde ${warn}.`,
+    thermo: (pass: number, total: number) => `Pasan ${pass} de ${total}.`,
     goHome: "Analizar una web",
     notFound: "Esta categoría no existe.",
   },
@@ -230,8 +229,7 @@ const en: Dict = {
     next: "Next",
     status: { pass: "Pass", fail: "Fail", manual: "Manual", na: "N/A" },
     noData: "There’s no analysis yet.",
-    thermo: (pass: number, total: number, good: number, warn: number) =>
-      `${pass} of ${total} pass. Green from ${good}, yellow from ${warn}.`,
+    thermo: (pass: number, total: number) => `${pass} of ${total} pass.`,
     goHome: "Analyze a site",
     notFound: "This category doesn’t exist.",
   },
