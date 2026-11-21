@@ -166,6 +166,7 @@ function ThanksModal({ open, onClose }: { open: boolean; onClose: () => void }) 
           </span>
         </div>
 
+        {/* Cafecito: oculto por ahora. Para volver a mostrarlo, descomentá este bloque.
         <p className="relative mt-5 text-center text-[10px] leading-tight text-stone">
           {m.coffee}{" "}
           <a href={CAFECITO} target="_blank" rel="noreferrer" className="font-semibold text-ink underline underline-offset-2">
@@ -173,6 +174,7 @@ function ThanksModal({ open, onClose }: { open: boolean; onClose: () => void }) 
             <span className="sr-only"> {t.dash.opensNew}</span>
           </a>
         </p>
+        */}
       </div>
     </dialog>
   );
