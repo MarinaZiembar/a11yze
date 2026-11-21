@@ -64,9 +64,9 @@ export default function CheckPage() {
 
   return (
     <main id="main" tabIndex={-1} className="px-4 pb-6 outline-none lg:px-6">
-      <div className="grid gap-3 lg:h-[calc(100dvh-4.5rem-1.5rem)] lg:grid-cols-12 lg:grid-rows-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:h-[calc(100dvh-4.5rem-1.5rem)] lg:grid-cols-12 lg:grid-rows-2">
         {/* Intro de la categoría */}
-        <section className={`relative flex flex-col overflow-hidden rounded-[2.5rem] p-6 sm:p-8 lg:col-span-5 lg:row-span-2 ${heroTone}`}>
+        <section className={`relative flex min-w-0 flex-col overflow-hidden rounded-[2.5rem] p-6 sm:p-8 lg:col-span-5 lg:row-span-2 ${heroTone}`}>
           <Asterisk className={`pointer-events-none absolute -bottom-20 -right-20 size-80 animate-spin-slow ${heroDark ? "text-ash" : "text-ink/[0.07]"}`} />
           <Link href="/" className="group relative inline-flex w-fit items-center gap-2 rounded-full text-sm font-medium">
             <span className="grid size-8 place-items-center rounded-full border border-current/25 transition-transform group-hover:-translate-x-1" aria-hidden="true">
@@ -81,7 +81,7 @@ export default function CheckPage() {
               <Pill key={w}>WCAG {w}</Pill>
             ))}
           </div>
-          <h1 className="relative mt-4 text-5xl font-medium leading-[0.95] tracking-tighter lg:text-6xl xl:text-7xl">
+          <h1 className="relative mt-4 break-words text-5xl font-medium leading-[0.95] tracking-tighter lg:text-6xl xl:text-7xl">
             <span className="tabular-nums opacity-40">{idx + 1}.</span> {category.title[lang]}
           </h1>
           <p className={`relative mt-4 max-w-md text-lg leading-snug ${heroDark ? "text-mute" : ""}`}>{category.short[lang]}</p>
@@ -201,12 +201,12 @@ export default function CheckPage() {
 function Panel({ title, className, delay, children }: { title: string; className: string; delay: number; children: React.ReactNode }) {
   const headingId = `panel-${title.replace(/\W+/g, "-").toLowerCase()}`;
   return (
-    <section aria-labelledby={headingId} className={`animate-rise flex min-h-0 flex-col rounded-[2rem] p-6 ${className}`} style={{ animationDelay: `${delay}ms` }}>
+    <section aria-labelledby={headingId} className={`animate-rise flex min-h-0 min-w-0 flex-col rounded-[2rem] p-6 ${className}`} style={{ animationDelay: `${delay}ms` }}>
       <h2 id={headingId} className="mb-4 text-2xl font-medium tracking-tight">
         {title}
       </h2>
       {/* Región scrolleable enfocable con teclado (requisito de accesibilidad) */}
-      <div tabIndex={0} role="region" aria-labelledby={headingId} className="scroll-thin -mr-2 min-h-0 flex-1 overflow-y-auto pr-2">
+      <div tabIndex={0} role="region" aria-labelledby={headingId} className="scroll-thin -mr-2 min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden pr-2">
         {children}
       </div>
     </section>
@@ -216,7 +216,7 @@ function Panel({ title, className, delay, children }: { title: string; className
 function Finding({ audit: a }: { audit: AuditResult }) {
   const { t } = useLang();
   return (
-    <li className="rounded-2xl bg-ash p-4 text-sm">
+    <li className="min-w-0 rounded-2xl bg-ash p-4 text-sm">
       <div className="flex items-start justify-between gap-3">
         <p className="font-medium leading-snug">
           <Inline text={a.title} />
@@ -227,8 +227,13 @@ function Finding({ audit: a }: { audit: AuditResult }) {
         <ul className="mt-3 space-y-2">
           {a.items.slice(0, 3).map((it, i) => (
             <li key={i}>
-              {it.snippet && <code className="block overflow-x-auto whitespace-pre rounded-lg bg-ink px-2.5 py-1.5 font-mono text-xs text-sand">{it.snippet}</code>}
-              {it.explanation && <p className="mt-1 text-xs text-mute">{it.explanation}</p>}
+              {it.snippet && (
+                // Bloque scrolleable en horizontal, nunca más ancho que su contenedor; enfocable con teclado
+                <pre tabIndex={0} className="scroll-thin w-full max-w-full overflow-x-auto rounded-lg bg-ink px-2.5 py-1.5 font-mono text-xs text-sand">
+                  <code className="whitespace-pre [overflow-wrap:normal]">{it.snippet}</code>
+                </pre>
+              )}
+              {it.explanation && <p className="mt-1 text-xs text-mute [overflow-wrap:anywhere]">{it.explanation}</p>}
             </li>
           ))}
           {a.total > 3 && <li className="text-xs text-mute">{t.detail.more(a.total - 3)}</li>}
