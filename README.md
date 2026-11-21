@@ -39,6 +39,10 @@ La modal que aparece al descargar el PDF tiene un form que hace POST a `/api/fee
 
 Variables en Vercel: `RESEND_API_KEY` (obligatoria), `FEEDBACK_TO` y `FEEDBACK_FROM` (opcionales). Con el remitente de prueba `onboarding@resend.dev`, Resend solo entrega al mail de tu cuenta; para otro destino verificá un dominio (ej. holaasoymaru.com.ar) y usá `A11yze <hola@holaasoymaru.com.ar>`.
 
+## Analytics
+
+Usa `@vercel/analytics` (`<Analytics />` en `app/layout.tsx`). Hay que activarlo una vez en Vercel → proyecto → **Analytics → Enable**.
+
 ## Personalizar
 
 - Contacto del footer: `lib/site.ts`
