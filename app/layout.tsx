@@ -9,11 +9,26 @@ import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-bricolage", display: "swap" });
 
+const TITLE = "A11yze — Análisis de accesibilidad web";
+const DESCRIPTION =
+  "Analizá la accesibilidad de cualquier sitio en mobile y desktop, según los fundamentos de la W3C. Web accessibility analysis.";
+
 export const metadata: Metadata = {
-  title: "A11yze — Análisis de accesibilidad web",
-  description:
-    "Analizá la accesibilidad de cualquier sitio en mobile y desktop, según los fundamentos de la W3C. Web accessibility analysis.",
+  metadataBase: new URL("https://a11yze.vercel.app"),
+  title: TITLE,
+  description: DESCRIPTION,
   icons: { icon: "/icon.svg" },
+  // La imagen la genera app/opengraph-image.tsx; Next la agrega sola a og:image y twitter:image
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "A11yze",
+    title: TITLE,
+    description: DESCRIPTION,
+    locale: "es_AR",
+    alternateLocale: ["en_US"],
+  },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
 
 export const viewport: Viewport = { themeColor: "#eae8df" };
